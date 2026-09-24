@@ -39,7 +39,14 @@ async function tickers():Promise<any[]>{return publicJson(`${base}/fapi/v1/ticke
 
 async function runOnce(){
   state.lastTick=Date.now();
+  console.log('[worker] scan started');
+
   const raw=await tickers();
+  console.log(`[worker] received ${raw.length} Binance 24h tickers`);
+
+  const pairs=raw.filter(x=>x.symbol?.endsWith('USDT')&&Number(x.quoteVolume)>10000000).sort((a,b)=>Number(b.quoteVolume)-Number(a.quoteVolume)).slice(0,10);
+
+  console.log(`[worker] selected ${pairs.length} USDT futures pairs: ${pairs.map(x=>x.symbol).join(', ')}`);
   const pairs=raw.filter(x=>x.symbol?.endsWith('USDT')&&Number(x.quoteVolume)>10000000).sort((a,b)=>Number(b.quoteVolume)-Number(a.quoteVolume)).slice(0,10);
   const infos:FuturesSymbolInfo[]=pairs.map(x=>({symbol:x.symbol,baseAsset:x.symbol.replace('USDT',''),quoteAsset:'USDT',pricePrecision:4,quantityPrecision:3,minQty:.001,stepSize:.001,tickSize:.0001,minNotional:5,price:Number(x.lastPrice),priceChangePercent:Number(x.priceChangePercent),volume24h:Number(x.volume),quoteVolume24h:Number(x.quoteVolume),high24h:Number(x.highPrice),low24h:Number(x.lowPrice),rsi14:50,trend:'NEUTRAL',aiScore:0,aiRecommendedSignal:'HOLD'} as any));
   // Manage existing positions first.
