@@ -157,26 +157,62 @@ export class BinanceService {
   }
 
  static async fetchKlines(symbol: string, interval = '15m', limit = 100, isTestnet = false) {
-  try {
-    const baseUrl = isTestnet
-      ? 'https://testnet.binancefuture.com'
-      : 'https://fapi.binance.com';
+    try {
+      const baseUrl = isTestnet
+        ? 'https://testnet.binancefuture.com'
+        : 'https://fapi.binance.com';
 
-    const url = `${baseUrl}/fapi/v1/klines?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=${limit}`;
+      const url =
+        `${baseUrl}/fapi/v1/klines?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=${limit}`;
 
-    const res = await fetch(url);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    if (!res.ok) {
-      console.error(`[Binance API] Klines request failed: ${res.status} ${res.statusText}`);
+      try {
+        const res = await fetch(url, {
+          signal: controller.signal,
+          headers: { Accept: 'application/json' },
+        });
+
+        const raw = await res.text();
+
+        if (!res.ok) {
+          console.error(
+            `[Binance API] Klines request failed for ${symbol} ${interval}: ${res.status} ${raw}`
+          );
+          return [];
+        }
+
+        const data = JSON.parse(raw);
+
+        if (!Array.isArray(data)) {
+          console.error(
+            `[Binance API] Klines response for ${symbol} ${interval} was not an array`
+          );
+          return [];
+        }
+
+        return data.map((k: any[]) => ({
+          time: Number(k[0]),
+          open: Number(k[1]),
+          high: Number(k[2]),
+          low: Number(k[3]),
+          close: Number(k[4]),
+          volume: Number(k[5]),
+          quoteVolume: Number(k[7]),
+          tradesCount: Number(k[8]),
+        }));
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    } catch (err: any) {
+      console.error(
+        `[Binance API] Failed to fetch klines for ${symbol} ${interval}:`,
+        err?.name === 'AbortError' ? 'request timeout' : err
+      );
       return [];
     }
-
-    return await res.json();
-  } catch (err) {
-    console.error('[Binance API] Failed to fetch klines:', err);
-    return [];
   }
-}
 
   static async fetchAccount(credentials: BinanceCredentials): Promise<{
     success: boolean;
