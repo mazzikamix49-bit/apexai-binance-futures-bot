@@ -61,7 +61,29 @@ async function runOnce(){
   }
   if(state.positions.length>=maxPositions) return;
   const open=new Set(state.positions.map(p=>p.symbol));
-  const analyses=await Promise.all(infos.filter(p=>!open.has(p.symbol)).slice(0,6).map(p=>analyzeMarket(p.symbol,p,testnet).catch(()=>null)));
+ const scanPairs = infos.filter(p=>!open.has(p.symbol)).slice(0,6);
+
+console.log(`[worker] analyzing ${scanPairs.length} pairs: ${scanPairs.map(p=>p.symbol).join(', ')}`);
+
+const analyses = await Promise.all(
+  scanPairs.map(async p => {
+    try {
+      const result = await analyzeMarket(p.symbol, p, testnet);
+
+      console.log(
+        `[worker] ${p.symbol} analysis: ` +
+        `side=${result?.side ?? 'NONE'} ` +
+        `confidence=${result?.confidence ?? 'N/A'} ` +
+        `RR=${result?.riskReward ?? 'N/A'}`
+      );
+
+      return result;
+    } catch (err) {
+      console.error(`[worker] ${p.symbol} analysis failed:`, err);
+      return null;
+    }
+  })
+);
   const candidates=analyses.filter(a=>a&&a.side&&a.confidence>=minConfidence&&a.atrPercent<=maxAtr&&a.riskReward>=minRR).sort((a,b)=>(b!.confidence+b!.riskReward*5)-(a!.confidence+a!.riskReward*5));
   const a=candidates[0]; if(!a) return;
   const pair=infos.find(x=>x.symbol===a!.symbol)!; const equity=paper?1000:(Number((await account()).totalMarginBalance)||0); const stopPct=Math.abs((a!.stopLossPrice-a!.price)/a!.price)*100; const margin=Math.max(1,Math.min(25,equity*(riskPct/100)/Math.max(.001,(stopPct/100)*leverage)));
