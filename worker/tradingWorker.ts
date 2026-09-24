@@ -1,3 +1,5 @@
+// WRITE PERMISSION TEST — safe no-op marker
+// This line is intentionally harmless and can be removed later.
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
