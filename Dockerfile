@@ -1,6 +1,6 @@
 FROM node:22-bookworm-slim
 WORKDIR /app
-COPY package.json bun.lock tsconfig.json vite.config.ts index.html metadata.json .env.example ./
+COPY package.json bun.lock tsconfig.json vite.config.ts index.html metadata.json ./
 COPY src ./src
 COPY server.ts ./server.ts
 COPY api ./api
