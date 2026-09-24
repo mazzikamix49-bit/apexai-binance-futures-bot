@@ -1,0 +1,21 @@
+services:
+  apexai:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      WORKER_ENABLED: "true"
+      WORKER_PAPER_MODE: "true"
+      WORKER_SCAN_INTERVAL_MS: "30000"
+      WORKER_MAX_POSITIONS: "2"
+      WORKER_LEVERAGE: "5"
+      WORKER_MIN_CONFIDENCE: "78"
+      WORKER_RISK_PER_TRADE_PCT: "0.35"
+      WORKER_MIN_RR: "1.5"
+      WORKER_MAX_ATR_PCT: "3.5"
+    volumes:
+      - ./data:/app/data
