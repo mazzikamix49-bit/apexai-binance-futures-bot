@@ -92,6 +92,8 @@ const analyses = await Promise.all(
   state.positions.push({symbol:a!.symbol,side:a!.side!,entry:a!.price,qty,margin,leverage,sl:a!.stopLossPrice,tp:a!.tp2Price,openedAt:Date.now(),paper}); save();
 }
 
+console.log('[worker] scan cycle completed');
+
 let busy=false; export function workerStatus(){return {...state,enabled:true,running:true,paper,uptimeMs:Date.now()-state.startedAt,profitFactor:state.grossLoss?state.grossProfit/state.grossLoss:state.grossProfit>0?Infinity:0};}
 export function startWorker(){
   if(!paper&&!key) {console.error('[worker] Real mode requested but Binance credentials are missing');return;}
