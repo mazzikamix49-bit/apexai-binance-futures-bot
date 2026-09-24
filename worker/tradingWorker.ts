@@ -127,7 +127,7 @@ async function tickers(): Promise<any[]> {
 
 async function runOnce() {
   state.lastTick = Date.now();
-  console.log('[worker] scan started');
+  console.log('[worker] scan started - build fix 2026-09-24');
 
   const raw = await tickers();
   const pairs = raw
