@@ -156,15 +156,27 @@ export class BinanceService {
     }
   }
 
-  static async fetchKlines(symbol: string, interval = '15m', limit = 100, isTestnet = false) {
-    try {
-      const res = await fetch(`/api/binance/klines?symbol=${symbol}&interval=${interval}&limit=${limit}&testnet=${isTestnet}`);
-      return await res.json();
-    } catch (err) {
-      console.error('Failed to fetch klines:', err);
+ static async fetchKlines(symbol: string, interval = '15m', limit = 100, isTestnet = false) {
+  try {
+    const baseUrl = isTestnet
+      ? 'https://testnet.binancefuture.com'
+      : 'https://fapi.binance.com';
+
+    const url = `${baseUrl}/fapi/v1/klines?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=${limit}`;
+
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      console.error(`[Binance API] Klines request failed: ${res.status} ${res.statusText}`);
       return [];
     }
+
+    return await res.json();
+  } catch (err) {
+    console.error('[Binance API] Failed to fetch klines:', err);
+    return [];
   }
+}
 
   static async fetchAccount(credentials: BinanceCredentials): Promise<{
     success: boolean;
